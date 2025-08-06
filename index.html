@@ -68,6 +68,14 @@
             border-color: #555;
             color: #e0e0e0;
         }
+        
+        /* Dropdown color styling */
+        .color-2 { color: #868686; }
+        .color-3 { color: #64FF5C; }
+        .color-4 { color: #E88C2A; }
+        .color-5 { color: #7114BD; }
+        .color-6 { color: #E82A2A; }
+        .color-7 { color: #2AE8D2; }
 
         .result {
             margin-top: 20px;
@@ -174,14 +182,6 @@
         .dark-mode #footer {
             color: #ff69b4;
         }
-        
-        /* Substat Colors */
-        .color-2 { color: #868686; }
-        .color-3 { color: #64FF5C; }
-        .color-4 { color: #E88C2A; }
-        .color-5 { color: #7114BD; }
-        .color-6 { color: #E82A2A; }
-        .color-7 { color: #2AE8D2; }
     </style>
 </head>
 <body>
@@ -363,15 +363,17 @@
                 let html = `<div><h4>${el.label} Accessory</h4>`;
                 html += `<label>Base ${el.label} Damage: <input type="number" id="${key}Raw" value="0" oninput="calculateAll()"/></label>`;
                 for (let i = 1; i <= 4; i++) {
+                    const selectedVal = Number(document.getElementById(`${key}Slot${i}Val`)?.value) || 0;
+                    const colorClass = selectedVal > 1 ? getSubstatColorClass(selectedVal) : '';
                     html += `
                         <label>Slot ${i}:
-                            <select id="${key}Slot${i}Type" onchange="calculateAll()">
+                            <select id="${key}Slot${i}Type" onchange="handleMainAccessoryChange('${key}', ${i})">
                                 <option value="none">--</option>
                                 ${ACCESSORY_ELEMENTS.map(accEl =>
                                     `<option value="${accEl}">${ELEMENT_LABELS[accEl] || "All Attributes"}</option>`
                                 ).join("")}
                             </select>
-                            <select id="${key}Slot${i}Val" onchange="calculateAll()">
+                            <select id="${key}Slot${i}Val" onchange="handleMainAccessoryChange('${key}', ${i})" class="${colorClass}">
                                 ${SUBSTAT_VALUES.map(v => `<option value="${v}" class="${getSubstatColorClass(v)}">${v}%</option>`).join("")}
                             </select>
                         </label>
@@ -552,14 +554,14 @@
                 const selectedSubstatVal = Number(currentSlots[i-1].val);
                 html += `
                     <label>Slot ${i}:
-                        <select id="oldAccSlot${i}Type" onchange="compareAccessories(); updateSubstatColor('oldAccSlot${i}Val', this.value, document.getElementById('oldAccSlot${i}Val').value)">
+                        <select id="oldAccSlot${i}Type" onchange="compareAccessories(); colorComparisonSelects('oldAccSlot${i}Type', 'oldAccSlot${i}Val')">
                             <option value="none">--</option>
                             ${ACCESSORY_ELEMENTS.map(accEl =>
-                                `<option value="${accEl}" ${selectedSubstatType === accEl ? 'selected' : ''} class="${selectedSubstatType === accEl ? getSubstatColorClass(selectedSubstatVal) : ''}">${ELEMENT_LABELS[accEl] || "All Attributes"}</option>`
+                                `<option value="${accEl}" ${selectedSubstatType === accEl ? 'selected' : ''}>${ELEMENT_LABELS[accEl] || "All Attributes"}</option>`
                             ).join("")}
                         </select>
-                        <select id="oldAccSlot${i}Val" onchange="compareAccessories(); updateSubstatColor('oldAccSlot${i}Type', document.getElementById('oldAccSlot${i}Type').value, this.value)">
-                            ${SUBSTAT_VALUES.map(v => `<option value="${v}" class="${getSubstatColorClass(v)}" ${selectedSubstatVal === v ? 'selected' : ''}>${v}%</option>`).join("")}
+                        <select id="oldAccSlot${i}Val" onchange="compareAccessories(); colorComparisonSelects('oldAccSlot${i}Type', 'oldAccSlot${i}Val')">
+                            ${SUBSTAT_VALUES.map(v => `<option value="${v}" ${selectedSubstatVal === v ? 'selected' : ''}>${v}%</option>`).join("")}
                         </select>
                     </label>
                 `;
@@ -573,14 +575,14 @@
             for (let i = 1; i <= 4; i++) {
                 html += `
                     <label>Slot ${i}:
-                        <select id="newAccSlot${i}Type" onchange="compareAccessories(); updateSubstatColor('newAccSlot${i}Val', this.value, document.getElementById('newAccSlot${i}Val').value)">
+                        <select id="newAccSlot${i}Type" onchange="compareAccessories(); colorComparisonSelects('newAccSlot${i}Type', 'newAccSlot${i}Val')">
                             <option value="none">--</option>
                             ${ACCESSORY_ELEMENTS.map(accEl =>
                                 `<option value="${accEl}">${ELEMENT_LABELS[accEl] || "All Attributes"}</option>`
                             ).join("")}
                         </select>
-                        <select id="newAccSlot${i}Val" onchange="compareAccessories(); updateSubstatColor('newAccSlot${i}Type', document.getElementById('newAccSlot${i}Type').value, this.value)">
-                            ${SUBSTAT_VALUES.map(v => `<option value="${v}" class="${getSubstatColorClass(v)}">${v}%</option>`).join("")}
+                        <select id="newAccSlot${i}Val" onchange="compareAccessories(); colorComparisonSelects('newAccSlot${i}Type', 'newAccSlot${i}Val')">
+                            ${SUBSTAT_VALUES.map(v => `<option value="${v}">${v}%</option>`).join("")}
                         </select>
                     </label>
                 `;
@@ -591,32 +593,30 @@
             `;
             formContainer.innerHTML = html;
             compareAccessories();
-            // Initial color update for the new form
-            for(let i = 1; i <= 4; i++) {
-                updateSubstatColor(`oldAccSlot${i}Type`, document.getElementById(`oldAccSlot${i}Type`).value, document.getElementById(`oldAccSlot${i}Val`).value);
-                updateSubstatColor(`newAccSlot${i}Type`, document.getElementById(`newAccSlot${i}Type`).value, document.getElementById(`newAccSlot${i}Val`).value);
+            // Apply initial coloring for the comparison form
+            for(let i=1; i<=4; i++) {
+                colorComparisonSelects(`oldAccSlot${i}Type`, `oldAccSlot${i}Val`);
+                colorComparisonSelects(`newAccSlot${i}Type`, `newAccSlot${i}Val`);
             }
         }
 
-        function updateSubstatColor(elementId, typeValue, valValue) {
-            const elementSelect = document.getElementById(elementId);
-            const value = Number(valValue);
-
-            // Clear existing color classes
-            for (let i = 0; i < elementSelect.options.length; i++) {
-                elementSelect.options[i].classList.remove('color-2', 'color-3', 'color-4', 'color-5', 'color-6', 'color-7');
-            }
-
-            // Apply color class to the selected option if it's the correct type and value
-            if (typeValue !== 'none' && value > 1) {
-                const colorClass = getSubstatColorClass(value);
-                const typeOption = elementSelect.querySelector(`option[value="${typeValue}"]`);
-                if(typeOption) {
-                    typeOption.classList.add(colorClass);
-                }
+        function colorComparisonSelects(typeId, valId) {
+            const typeSelect = document.getElementById(typeId);
+            const valSelect = document.getElementById(valId);
+            const selectedVal = Number(valSelect.value);
+            
+            // Remove previous color classes
+            typeSelect.className = '';
+            valSelect.className = '';
+            
+            // Apply new color class if value is valid
+            if (selectedVal > 1) {
+                const colorClass = getSubstatColorClass(selectedVal);
+                typeSelect.classList.add(colorClass);
+                valSelect.classList.add(colorClass);
             }
         }
-
+        
         function compareAccessories() {
             const mainElement = document.getElementById("accessoryToCompare").value;
             const resultDiv = document.getElementById("accessoryComparisonResult");
@@ -706,19 +706,17 @@
         function handleMainAccessoryChange(elementKey, slotIndex) {
             const typeSelect = document.getElementById(`${elementKey}Slot${slotIndex}Type`);
             const valSelect = document.getElementById(`${elementKey}Slot${slotIndex}Val`);
-            // Clear all color classes from all options in both selects
-            for(const select of [typeSelect, valSelect]) {
-                for(const option of select.options) {
-                    option.classList.remove('color-2', 'color-3', 'color-4', 'color-5', 'color-6', 'color-7');
-                }
-            }
-            // Apply color to the selected options
-            const typeValue = typeSelect.value;
-            const valValue = Number(valSelect.value);
-            if(typeValue !== 'none' && valValue > 1) {
-                const colorClass = getSubstatColorClass(valValue);
-                typeSelect.querySelector(`option[value="${typeValue}"]`).classList.add(colorClass);
-                valSelect.querySelector(`option[value="${valValue}"]`).classList.add(colorClass);
+            const selectedVal = Number(valSelect.value);
+            
+            // Remove previous color classes
+            typeSelect.className = '';
+            valSelect.className = '';
+            
+            // Apply new color class if value is valid
+            if (selectedVal > 1) {
+                const colorClass = getSubstatColorClass(selectedVal);
+                typeSelect.classList.add(colorClass);
+                valSelect.classList.add(colorClass);
             }
             calculateAll();
         }
@@ -728,13 +726,16 @@
             loadSettings();
             calculateAll();
 
-            // Add event listeners for main accessory sections
+            // Add event listeners and initial coloring for main accessory sections
             for(const key of ELEMENTS) {
                 for(let i = 1; i <= 4; i++) {
-                    document.getElementById(`${key}Slot${i}Type`).addEventListener('change', () => handleMainAccessoryChange(key, i));
-                    document.getElementById(`${key}Slot${i}Val`).addEventListener('change', () => handleMainAccessoryChange(key, i));
-                    // Initial color update
-                    handleMainAccessoryChange(key, i);
+                    const typeSelect = document.getElementById(`${key}Slot${i}Type`);
+                    const valSelect = document.getElementById(`${key}Slot${i}Val`);
+                    if (typeSelect && valSelect) {
+                        typeSelect.addEventListener('change', () => handleMainAccessoryChange(key, i));
+                        valSelect.addEventListener('change', () => handleMainAccessoryChange(key, i));
+                        handleMainAccessoryChange(key, i);
+                    }
                 }
             }
         });
