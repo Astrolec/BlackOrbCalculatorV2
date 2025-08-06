@@ -69,7 +69,7 @@
             color: #e0e0e0;
         }
         
-        /* Dropdown color styling */
+        /* Define color variables for consistency */
         .color-2 { color: #868686; }
         .color-3 { color: #64FF5C; }
         .color-4 { color: #E88C2A; }
@@ -286,6 +286,15 @@
             fire: { companion: "miho", understanding: "fireUnderstanding", relic: "fireRelic", label: "Fire" },
             water: { companion: "luna", understanding: "waterUnderstanding", relic: "waterRelic", label: "Water" },
         };
+        
+        const COLOR_MAP = {
+            2: '#868686',
+            3: '#64FF5C',
+            4: '#E88C2A',
+            5: '#7114BD',
+            6: '#E82A2A',
+            7: '#2AE8D2'
+        };
 
         const BOSS_BONUS_TABLE = {
             1: 0, 2: 0, 3: 50, 4: 50, 5: 50, 6: 50, 7: 50, 8: 100,
@@ -310,9 +319,9 @@
             45: 660, 46: 680, 47: 700, 48: 720, 49: 740, 50: 760,
             51: 760
         };
-
-        function getSubstatColorClass(value) {
-            return `color-${value}`;
+        
+        function getSubstatColor(value) {
+            return COLOR_MAP[value] || '#333';
         }
         
         function saveSettings() {
@@ -364,17 +373,17 @@
                 html += `<label>Base ${el.label} Damage: <input type="number" id="${key}Raw" value="0" oninput="calculateAll()"/></label>`;
                 for (let i = 1; i <= 4; i++) {
                     const selectedVal = Number(document.getElementById(`${key}Slot${i}Val`)?.value) || 0;
-                    const colorClass = selectedVal > 1 ? getSubstatColorClass(selectedVal) : '';
+                    const color = selectedVal > 1 ? getSubstatColor(selectedVal) : '';
                     html += `
                         <label>Slot ${i}:
-                            <select id="${key}Slot${i}Type" onchange="handleMainAccessoryChange('${key}', ${i})">
+                            <select id="${key}Slot${i}Type" onchange="handleMainAccessoryChange('${key}', ${i})" style="color: ${color};">
                                 <option value="none">--</option>
                                 ${ACCESSORY_ELEMENTS.map(accEl =>
                                     `<option value="${accEl}">${ELEMENT_LABELS[accEl] || "All Attributes"}</option>`
                                 ).join("")}
                             </select>
-                            <select id="${key}Slot${i}Val" onchange="handleMainAccessoryChange('${key}', ${i})" class="${colorClass}">
-                                ${SUBSTAT_VALUES.map(v => `<option value="${v}" class="${getSubstatColorClass(v)}">${v}%</option>`).join("")}
+                            <select id="${key}Slot${i}Val" onchange="handleMainAccessoryChange('${key}', ${i})" style="color: ${color};">
+                                ${SUBSTAT_VALUES.map(v => `<option value="${v}">${v}%</option>`).join("")}
                             </select>
                         </label>
                     `;
@@ -605,15 +614,14 @@
             const valSelect = document.getElementById(valId);
             const selectedVal = Number(valSelect.value);
             
-            // Remove previous color classes
-            typeSelect.className = '';
-            valSelect.className = '';
-            
-            // Apply new color class if value is valid
+            // Apply color style directly
             if (selectedVal > 1) {
-                const colorClass = getSubstatColorClass(selectedVal);
-                typeSelect.classList.add(colorClass);
-                valSelect.classList.add(colorClass);
+                const color = getSubstatColor(selectedVal);
+                typeSelect.style.color = color;
+                valSelect.style.color = color;
+            } else {
+                typeSelect.style.color = '#333';
+                valSelect.style.color = '#333';
             }
         }
         
@@ -708,15 +716,14 @@
             const valSelect = document.getElementById(`${elementKey}Slot${slotIndex}Val`);
             const selectedVal = Number(valSelect.value);
             
-            // Remove previous color classes
-            typeSelect.className = '';
-            valSelect.className = '';
-            
-            // Apply new color class if value is valid
+            // Apply color style directly
             if (selectedVal > 1) {
-                const colorClass = getSubstatColorClass(selectedVal);
-                typeSelect.classList.add(colorClass);
-                valSelect.classList.add(colorClass);
+                const color = getSubstatColor(selectedVal);
+                typeSelect.style.color = color;
+                valSelect.style.color = color;
+            } else {
+                typeSelect.style.color = '#333';
+                valSelect.style.color = '#333';
             }
             calculateAll();
         }
