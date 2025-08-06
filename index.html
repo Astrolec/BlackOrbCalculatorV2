@@ -561,15 +561,16 @@
             for (let i = 1; i <= 4; i++) {
                 const selectedSubstatType = currentSlots[i-1].type;
                 const selectedSubstatVal = Number(currentSlots[i-1].val);
+                const color = getSubstatColor(selectedSubstatVal);
                 html += `
                     <label>Slot ${i}:
-                        <select id="oldAccSlot${i}Type" onchange="compareAccessories(); colorComparisonSelects('oldAccSlot${i}Type', 'oldAccSlot${i}Val')">
+                        <select id="oldAccSlot${i}Type" onchange="compareAccessories(); colorComparisonSelects('oldAccSlot${i}Type', 'oldAccSlot${i}Val')" style="color: ${color};">
                             <option value="none">--</option>
                             ${ACCESSORY_ELEMENTS.map(accEl =>
                                 `<option value="${accEl}" ${selectedSubstatType === accEl ? 'selected' : ''}>${ELEMENT_LABELS[accEl] || "All Attributes"}</option>`
                             ).join("")}
                         </select>
-                        <select id="oldAccSlot${i}Val" onchange="compareAccessories(); colorComparisonSelects('oldAccSlot${i}Type', 'oldAccSlot${i}Val')">
+                        <select id="oldAccSlot${i}Val" onchange="compareAccessories(); colorComparisonSelects('oldAccSlot${i}Type', 'oldAccSlot${i}Val')" style="color: ${color};">
                             ${SUBSTAT_VALUES.map(v => `<option value="${v}" ${selectedSubstatVal === v ? 'selected' : ''}>${v}%</option>`).join("")}
                         </select>
                     </label>
@@ -602,11 +603,6 @@
             `;
             formContainer.innerHTML = html;
             compareAccessories();
-            // Apply initial coloring for the comparison form
-            for(let i=1; i<=4; i++) {
-                colorComparisonSelects(`oldAccSlot${i}Type`, `oldAccSlot${i}Val`);
-                colorComparisonSelects(`newAccSlot${i}Type`, `newAccSlot${i}Val`);
-            }
         }
 
         function colorComparisonSelects(typeId, valId) {
@@ -695,7 +691,7 @@
                 document.getElementById(`${mainElement}Slot${i}Val`).value = newVal;
             }
 
-            createAccessorySection();
+            // We no longer call createAccessorySection() here
             calculateAll();
             createAccessoryComparisonForm();
         }
